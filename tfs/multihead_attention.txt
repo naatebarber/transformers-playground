@@ -1,0 +1,35 @@
+ME: Oh ok, so if d_model is the size of the feature set (dimensionality of the feature vector), and seq_length is the number of those vectors, then what multi-head attention will do is:
+
+Run the linear transformation for Q along only the seq_length[n] token being observed
+Run the linear transformation for K along all seq_length features
+Create attention_scores by comparing the above steps
+Normalize the attention_scores by sqrt(d_k)
+Run a softmax to determine where attention should be placed
+Mutiply this attention_probability by the linear transformation of V along all seq_length features
+Return this context
+
+Right?
+
+GPT: Yes, you've outlined the steps involved in the multi-head attention process quite accurately. Here's a bit more detail on each step to clarify the process:
+
+1. **Linear Transformations**: 
+   - For `Q` (queries): The transformation is applied to the embedding of the token currently being processed (or a sequence of tokens if batch processing is used).
+   - For `K` (keys): The transformation is applied across all tokens in the input sequence, allowing each token in the sequence to serve as a potential point of attention for any other token.
+   - For `V` (values): Like the keys, the transformation is applied across all tokens in the sequence, preparing them to be weighted by the attention scores.
+
+2. **Attention Scores**: 
+   - The attention scores are computed by taking the dot product of the query with all keys. This step measures the similarity or relevance of each key to the query, indicating how much focus the query should put on each key.
+
+3. **Normalization**: 
+   - The attention scores are scaled down by the square root of `d_k` (the dimensionality of the key vectors). This step is crucial to prevent the softmax function from having extremely small gradients when the `d_k` is large, which could lead to very sharp distributions and, hence, a difficult training process.
+
+4. **Softmax**: 
+   - A softmax function is applied over the attention scores for each query, converting them into probabilities. This step determines the amount of attention that is distributed across the keys.
+
+5. **Attention Weights and Values**: 
+   - These attention probabilities (weights) are then used to create a weighted sum of the value vectors. This step effectively selects and blends the value vectors according to the computed attention distribution, which reflects the relevant information each token should consider.
+
+6. **Output**: 
+   - The result of this weighted sum gives you a new representation of each token that includes contextual information gleaned from the entire sequence. This output is then typically passed through another linear transformation before being sent to the next layer in the network.
+
+It's important to note that in a multi-head attention setup, steps 1-5 are done in parallel for each head, with each head potentially capturing different types of relationships in the data (since they have different weight matrices). The outputs from all heads are then concatenated and once more linearly transformed to produce the final output of the multi-head attention layer.

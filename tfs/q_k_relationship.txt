@@ -1,0 +1,32 @@
+Purpose of tensors:
+Every query in Q is dotted with every key in K to determine the attention that should be paid to the corresponding value in V.
+        
+Dimensions:
+batch_size - the number of sequences being passed at once.
+seq_len - the length of one sequence (number of tokens in one sequence)
+d_model - the total dimension of the embeddings (eg 1024-dim word vectors)
+d_k - the dimension of each embedding within one attention head
+
+The dimension of the tensors Q, K, and V, are all the same: [batch_size, num_heads, seq_len, d_k]
+
+The dimension of attn_scores is [batch_size, num_heads, seq_len, seq_len]
+
+This is because everything is happening in one operation. For all batches, for all heads, 
+every query is dotted with every key (which is why the last 2 dimensions of K are transposed). 
+This results in a tensor with the same first two dimensions, but the last two are a matrix that holds 
+the attention score of each query vector with each key vector.
+
+The division by the square root of d_k is to prepare the data for softmax.
+Softmax is performed on the last dimension of the attention score tensor, in the direction of 
+the query vectors.
+
+Finally, the values are multiplied with the attention probabilities, which represents summing the real context
+after calculating the importance of the corresponding key. 
+
+
+***IMPORTANT
+Mainly, when create the shape of [batch_size, num_heads, seq_length, seq_length]
+The second seq_length sized-vector becomes a softmax pointing to the values that 
+coorespond most with the query token defined in the first sequence length.
+
+This is the n^2 operation of the transformer.
