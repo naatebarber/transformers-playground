@@ -17,8 +17,11 @@ class Transformer(nn.Module):
         d_ff,
         max_seq_length,
         dropout,
+        device=torch.device("cpu"),
     ):
         super(Transformer, self).__init__()
+
+        self.device = device
 
         """
         src_vocab_size = the number of individual input tokens the encoder can handle
@@ -37,19 +40,23 @@ class Transformer(nn.Module):
         and generate language, as they provide the basis for the self-attention mechanisms to compute
         contextual relationships between words.
         """
-        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model)
-        self.decoder_embedding = nn.Embedding(target_vocab_size, d_model)
-        self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
+        self.encoder_embedding = nn.Embedding(src_vocab_size, d_model).to(device)
+        self.decoder_embedding = nn.Embedding(target_vocab_size, d_model).to(device)
+        self.positional_encoding = PositionalEncoding(d_model, max_seq_length).to(
+            device
+        )
 
         self.encoder_layers = [
-            EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)
+            EncoderLayer(d_model, num_heads, d_ff, dropout, device=device)
+            for _ in range(num_layers)
         ]
         self.decoder_layers = [
-            DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)
+            DecoderLayer(d_model, num_heads, d_ff, dropout, device=device)
+            for _ in range(num_layers)
         ]
 
-        self.fc = nn.Linear(d_model, target_vocab_size)
-        self.dropout = nn.Dropout(dropout)
+        self.fc = nn.Linear(d_model, target_vocab_size).to(device)
+        self.dropout = nn.Dropout(dropout).to(device)
 
     def generate_mask(self, src: torch.Tensor, tgt: torch.Tensor):
         """
@@ -58,8 +65,8 @@ class Transformer(nn.Module):
         and all 0s (typically padding tokens) are marked as False. This assumes
         that the index 0 is used for padding.
         """
-        src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
-        target_mask = (tgt != 0).unsqueeze(1).unsqueeze(3)
+        src_mask = (src != 0).unsqueeze(1).unsqueeze(2).to(self.device)
+        target_mask = (tgt != 0).unsqueeze(1).unsqueeze(3).to(self.device)
 
         """
         Get the sequence length of the target tensor (decoder layer)
@@ -71,7 +78,7 @@ class Transformer(nn.Module):
         where initially all positions can 'see' each other. A dimension of size 1 is prepended to allow this mask
         to be easily broadcasted across the batch during batch-wise operations.
         """
-        ones = torch.ones(1, seq_length, seq_length)
+        ones = torch.ones(1, seq_length, seq_length).to(self.device)
 
         """
         Apply the torch.triu (upper triangular) function to generate a mask with ones above the main diagonal
@@ -87,7 +94,7 @@ class Transformer(nn.Module):
         in computations such as attention, while False values are treated as 'unmasked' and included in computations. Thus,
         the resulting mask prevents the decoder from 'peeking' into the future tokens during the self-attention calculations.
         """
-        nopeak_mask = (1 - torch.triu(ones, diagonal=1)).bool()
+        nopeak_mask = (1 - torch.triu(ones, diagonal=1)).bool().to(self.device)
 
         target_mask = target_mask & nopeak_mask
         return src_mask, target_mask
@@ -100,10 +107,10 @@ class Transformer(nn.Module):
 
         src_embedded = self.dropout(
             self.positional_encoding(self.encoder_embedding(src))
-        )
+        ).to(self.device)
         tgt_embedded = self.dropout(
             self.positional_encoding(self.decoder_embedding(tgt))
-        )
+        ).to(self.device)
 
         enc_output = src_embedded
         for enc_layer in self.encoder_layers:

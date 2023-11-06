@@ -6,22 +6,30 @@ from tfs.position_wise_feed_forward import PositionWiseFeedForward
 
 
 class DecoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff, dropout):
+    def __init__(self, d_model, num_heads, d_ff, dropout, device=torch.device("cpu")):
         super(DecoderLayer, self).__init__()
+
+        self.device = device
 
         """
         Similar to encoder layer
         """
 
-        self.self_attn = MultiHeadAttention(d_model=d_model, num_heads=num_heads)
-        self.cross_attn = MultiHeadAttention(d_model=d_model, num_heads=num_heads)
-        self.feed_forward = PositionWiseFeedForward(d_model=d_model, d_ff=d_ff)
+        self.self_attn = MultiHeadAttention(
+            d_model=d_model, num_heads=num_heads, device=device
+        )
+        self.cross_attn = MultiHeadAttention(
+            d_model=d_model, num_heads=num_heads, device=device
+        )
+        self.feed_forward = PositionWiseFeedForward(
+            d_model=d_model, d_ff=d_ff, device=device
+        )
 
-        self.norm_1 = nn.LayerNorm(d_model)
-        self.norm_2 = nn.LayerNorm(d_model)
-        self.norm_3 = nn.LayerNorm(d_model)
+        self.norm_1 = nn.LayerNorm(d_model).to(self.device)
+        self.norm_2 = nn.LayerNorm(d_model).to(self.device)
+        self.norm_3 = nn.LayerNorm(d_model).to(self.device)
 
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout).to(self.device)
 
     def forward(self, x, enc_output, src_mask, target_mask):
         """

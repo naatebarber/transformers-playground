@@ -5,8 +5,10 @@ import torch.utils as utils
 
 
 class PositionWiseFeedForward(nn.Module):
-    def __init__(self, d_model, d_ff):
+    def __init__(self, d_model, d_ff, device=torch.device("cpu")):
         super(PositionWiseFeedForward, self).__init__()
+
+        self.device = device
 
         """
         Define a non-linear feed forward network with a hidden layer size of d_ff
@@ -34,10 +36,10 @@ class PositionWiseFeedForward(nn.Module):
         }
         """
 
-        self.fc_1 = nn.Linear(d_model, d_ff)
-        self.fc_2 = nn.Linear(d_ff, d_model)
+        self.fc_1 = nn.Linear(d_model, d_ff).to(self.device)
+        self.fc_2 = nn.Linear(d_ff, d_model).to(self.device)
 
-        self.relu = nn.ReLU()
+        self.relu = nn.ReLU().to(self.device)
 
     def forward(self, x):
         return self.fc_2(self.relu(self.fc_1(x)))

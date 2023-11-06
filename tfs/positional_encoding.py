@@ -4,8 +4,10 @@ import math
 
 
 class PositionalEncoding(nn.Module):
-    def __init__(self, d_model, max_seq_length):
+    def __init__(self, d_model, max_seq_length, device=torch.device("cpu")):
         super(PositionalEncoding, self).__init__()
+
+        self.device = device
 
         """
         Initialize a tensor of zeros that will hold the positional encodings.
@@ -13,7 +15,7 @@ class PositionalEncoding(nn.Module):
         (the length of the longest sequence or the maximum number of tokens)
         and the dimensionality of the model (d_model).
         """
-        pe = torch.zeros(max_seq_length, d_model)
+        pe = torch.zeros(max_seq_length, d_model).to(self.device)
 
         """
         torch.arange -> Generates a 1D tensor containing a range from 0 up to
@@ -39,7 +41,11 @@ class PositionalEncoding(nn.Module):
         self-attention mechanism in the Transformer model does not inherently
         capture the order of the input sequence.
         """
-        position = torch.arange(0, max_seq_length, dtype=torch.float).unsqueeze(1)
+        position = (
+            torch.arange(0, max_seq_length, dtype=torch.float)
+            .unsqueeze(1)
+            .to(self.device)
+        )
 
         """
         frequency_step is a scaling factor used to determine how rapidly the sine and cosine waves oscillate. 
@@ -54,7 +60,9 @@ class PositionalEncoding(nn.Module):
 
         # Creates a spectrum of wavelengths
         frequency_step = -(math.log(10000)) / d_model
-        div_term = torch.exp(torch.arange(0, d_model, 2).float() * frequency_step)
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * frequency_step).to(
+            self.device
+        )
 
         """
         pe[:, 0::2] = torch.sin(position * div_term) assigns the sine of the positional 

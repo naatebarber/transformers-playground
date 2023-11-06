@@ -7,11 +7,13 @@ import copy
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_model, num_heads):
+    def __init__(self, d_model, num_heads, device=torch.device("cpu")):
         super(MultiHeadAttention, self).__init__()
 
         # Make sure the model dimension is divisible by the number of heads.
         assert d_model % num_heads == 0, "d_model not divisible by num heads"
+
+        self.device = device
 
         # Initialize dimensions
         self.d_model = d_model
@@ -31,10 +33,10 @@ class MultiHeadAttention(nn.Module):
         self.d_k = self.d_model // self.num_heads
 
         # Linear layers for transforming inputs
-        self.W_q = nn.Linear(d_model, d_model)  # Query
-        self.W_k = nn.Linear(d_model, d_model)  # Key
-        self.W_v = nn.Linear(d_model, d_model)  # Value
-        self.W_o = nn.Linear(d_model, d_model)  # Output
+        self.W_q = nn.Linear(d_model, d_model).to(self.device)  # Query
+        self.W_k = nn.Linear(d_model, d_model).to(self.device)  # Key
+        self.W_v = nn.Linear(d_model, d_model).to(self.device)  # Value
+        self.W_o = nn.Linear(d_model, d_model).to(self.device)  # Output
 
     def scaled_dot_product_attention(self, Q, K, V, mask=None):
         # Calculate attention scores

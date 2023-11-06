@@ -7,10 +7,15 @@ from tfs.position_wise_feed_forward import PositionWiseFeedForward
 
 
 class EncoderLayer(nn.Module):
-    def __init__(self, d_model, num_heads, d_ff, dropout):
+    def __init__(self, d_model, num_heads, d_ff, dropout, device=torch.device("cpu")):
         super(EncoderLayer, self).__init__()
-        self.self_attn = MultiHeadAttention(d_model=d_model, num_heads=num_heads)
-        self.feed_forward = PositionWiseFeedForward(d_model=d_model, d_ff=d_ff)
+        self.device = device
+        self.self_attn = MultiHeadAttention(
+            d_model=d_model, num_heads=num_heads, device=device
+        )
+        self.feed_forward = PositionWiseFeedForward(
+            d_model=d_model, d_ff=d_ff, device=device
+        )
 
         """
         Layer normalization is a technique to normalize the values across each feature in a layer's output. 
@@ -38,8 +43,8 @@ class EncoderLayer(nn.Module):
         'add' step in 'add-and-norm'), allowing the model to benefit from both the raw input and the stabilized output 
         of each sublayer.
         """
-        self.norm_1 = nn.LayerNorm(d_model)
-        self.norm_2 = nn.LayerNorm(d_model)
+        self.norm_1 = nn.LayerNorm(d_model).to(self.device)
+        self.norm_2 = nn.LayerNorm(d_model).to(self.device)
 
         """
         The dropout parameter provided when initializing the EncoderLayer class 
@@ -48,7 +53,7 @@ class EncoderLayer(nn.Module):
         it is applied after each sublayer's output and before it is added to the sublayer's input 
         (forming a residual connection) and normalized.
         """
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout).to(self.device)
 
     def forward(self, x, mask):
         """
