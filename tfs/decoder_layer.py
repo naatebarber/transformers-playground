@@ -4,6 +4,7 @@ import torch.nn as nn
 from tfs.multi_head_attention import MultiHeadAttention
 from tfs.position_wise_feed_forward import PositionWiseFeedForward
 
+
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(DecoderLayer, self).__init__()
@@ -23,7 +24,6 @@ class DecoderLayer(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, enc_output, src_mask, target_mask):
-
         """
         The mask here ensures the self-attention submodel can only create predictions for a token at i
         based on tokens of index < i.
@@ -34,8 +34,8 @@ class DecoderLayer(nn.Module):
         x = self.norm_1(x + self.dropout(attn_output))
 
         # """
-        # In cross-attention, the queries come from the output of the previous self-attention layer 
-        # of the decoder, while the keys and values are from the output of the encoder. This is essential for allowing 
+        # In cross-attention, the queries come from the output of the previous self-attention layer
+        # of the decoder, while the keys and values are from the output of the encoder. This is essential for allowing
         # the decoder to consider the entire input sequence when generating the output.
 
         # src_mask -> prevents the decoder from paying attention to padding tokens or other unwanted sources of input
@@ -70,5 +70,3 @@ class DecoderLayer(nn.Module):
         x = self.norm_3(x + self.dropout(ff_output))
 
         return x
-
-

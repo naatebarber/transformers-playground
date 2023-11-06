@@ -5,6 +5,7 @@ import torch.utils as utils
 from tfs.multi_head_attention import MultiHeadAttention
 from tfs.position_wise_feed_forward import PositionWiseFeedForward
 
+
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff, dropout):
         super(EncoderLayer, self).__init__()

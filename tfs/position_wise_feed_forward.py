@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.utils as utils
 
+
 class PositionWiseFeedForward(nn.Module):
     def __init__(self, d_model, d_ff):
         super(PositionWiseFeedForward, self).__init__()
@@ -35,7 +36,7 @@ class PositionWiseFeedForward(nn.Module):
 
         self.fc_1 = nn.Linear(d_model, d_ff)
         self.fc_2 = nn.Linear(d_ff, d_model)
-        
+
         self.relu = nn.ReLU()
 
     def forward(self, x):

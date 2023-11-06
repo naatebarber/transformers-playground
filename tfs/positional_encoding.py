@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import math
 
+
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_seq_length):
         super(PositionalEncoding, self).__init__()
@@ -52,9 +53,8 @@ class PositionalEncoding(nn.Module):
         """
 
         # Creates a spectrum of wavelengths
-        frequency_step = -(math.log(10000) / d_model)
-        div_term = torch.exp(torch.arange(0, d_model).float() * frequency_step)
-
+        frequency_step = -(math.log(10000)) / d_model
+        div_term = torch.exp(torch.arange(0, d_model, 2).float() * frequency_step)
 
         """
         pe[:, 0::2] = torch.sin(position * div_term) assigns the sine of the positional 
@@ -102,4 +102,4 @@ class PositionalEncoding(nn.Module):
         Returns:
         - A tensor of the same shape as x with positional encodings added to the token embeddings.
         """
-        return x + self.pe[:, :x.size(1)]
+        return x + self.pe[:, : x.size(1)]

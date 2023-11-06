@@ -5,6 +5,7 @@ import torch.utils.data as data
 import math
 import copy
 
+
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
@@ -12,7 +13,7 @@ class MultiHeadAttention(nn.Module):
         # Make sure the model dimension is divisible by the number of heads.
         assert d_model % num_heads == 0, "d_model not divisible by num heads"
 
-        # Initialize dimensions 
+        # Initialize dimensions
         self.d_model = d_model
         self.num_heads = num_heads
 
@@ -30,10 +31,10 @@ class MultiHeadAttention(nn.Module):
         self.d_k = self.d_model // self.num_heads
 
         # Linear layers for transforming inputs
-        self.W_q = nn.Linear(d_model, d_model) # Query
-        self.W_k = nn.Linear(d_model, d_model) # Key
-        self.W_v = nn.Linear(d_model, d_model) # Value
-        self.W_o = nn.Linear(d_model, d_model) # Output
+        self.W_q = nn.Linear(d_model, d_model)  # Query
+        self.W_k = nn.Linear(d_model, d_model)  # Key
+        self.W_v = nn.Linear(d_model, d_model)  # Value
+        self.W_o = nn.Linear(d_model, d_model)  # Output
 
     def scaled_dot_product_attention(self, Q, K, V, mask=None):
         # Calculate attention scores
@@ -49,10 +50,10 @@ class MultiHeadAttention(nn.Module):
         A -> batch_size, num_heads, seq_length, seq_length
 
         GPT {
-            The result is a new tensor with shape 
-            [batch_size, num_heads, seq_length, seq_length] 
-            where each element [i, j] in the seq_length x seq_length matrix 
-            represents the dot-product (attention score) between the i-th query 
+            The result is a new tensor with shape
+            [batch_size, num_heads, seq_length, seq_length]
+            where each element [i, j] in the seq_length x seq_length matrix
+            represents the dot-product (attention score) between the i-th query
             and j-th key for each head and each item in the batch.
         }
 
@@ -101,7 +102,6 @@ class MultiHeadAttention(nn.Module):
         """
         attn_probs = torch.softmax(attn_scores, dim=-1)
 
-
         """
         Whereas K is used to determine what level of attention should be paid to the currently observed token Q,
         V holds the information we actually want to aggregate.
@@ -114,7 +114,7 @@ class MultiHeadAttention(nn.Module):
         """
         out = torch.matmul(attn_probs, V)
         return out
-    
+
     def split_heads(self, x):
         # Reshape the input to have N heads for multi-head attention
         """
@@ -131,28 +131,28 @@ class MultiHeadAttention(nn.Module):
 
         When the heads are rejoined, features between separate heads (such as feature 1 and feature 1023) will be coorelated. Wow.
 
-        Also, this is not a direct split of the input data from X. Applying the linear 
-        transformations (W_q, W_k, W_v) will likely mix these features before they are fed to 
+        Also, this is not a direct split of the input data from X. Applying the linear
+        transformations (W_q, W_k, W_v) will likely mix these features before they are fed to
         scaled_dot_product_attention
         """
 
         batch_size, seq_length, d_model = x.size()
         return x.view(batch_size, seq_length, self.num_heads, self.d_k).transpose(1, 2)
-    
+
     def combine_heads(self, x):
         # Combine all the heads back into their original size.
 
         """
-        x includes the output results of all the heads. 
+        x includes the output results of all the heads.
         what we are doing here is reshaping it back into it's original form.
 
         GPT {
             After processing the input data through multiple heads in parallel, each producing a
-            part of the output, this method merges those parts back into a single tensor that 
-            has the same dimensionality as the original input before it was split among heads. 
-            This is achieved by reversing the operations that were applied to split the input, 
-            ensuring that the tensor's shape goes from [batch_size, num_heads, seq_length, d_k] 
-            back to [batch_size, seq_length, d_model], thus maintaining the original feature 
+            part of the output, this method merges those parts back into a single tensor that
+            has the same dimensionality as the original input before it was split among heads.
+            This is achieved by reversing the operations that were applied to split the input,
+            ensuring that the tensor's shape goes from [batch_size, num_heads, seq_length, d_k]
+            back to [batch_size, seq_length, d_model], thus maintaining the original feature
             space dimensionality.
         }
         """
@@ -178,9 +178,3 @@ class MultiHeadAttention(nn.Module):
         # This final transformation combines information from all heads to produce the final output.
         output = self.W_o(self.combine_heads(attn_output))
         return output
-
-
-
-
-
-        

@@ -5,15 +5,25 @@ from tfs.positional_encoding import PositionalEncoding
 from tfs.encoder_layer import EncoderLayer
 from tfs.decoder_layer import DecoderLayer
 
+
 class Transformer(nn.Module):
-    def __init__(self, src_vocab_size, target_vocab_size, d_model, num_heads, num_layers, d_ff, max_seq_length, dropout):
+    def __init__(
+        self,
+        src_vocab_size,
+        target_vocab_size,
+        d_model,
+        num_heads,
+        num_layers,
+        d_ff,
+        max_seq_length,
+        dropout,
+    ):
         super(Transformer, self).__init__()
 
         """
         src_vocab_size = the number of individual input tokens the encoder can handle
         target_vocab_size = the number of individual output tokens the decoder can write
         """
-
 
         """
         The embeddings defined below will create src_vocab_size rows, each with d_model columns. 
@@ -31,17 +41,21 @@ class Transformer(nn.Module):
         self.decoder_embedding = nn.Embedding(target_vocab_size, d_model)
         self.positional_encoding = PositionalEncoding(d_model, max_seq_length)
 
-        self.encoder_layers = [EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
-        self.decoder_layers = [DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)]
+        self.encoder_layers = [
+            EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)
+        ]
+        self.decoder_layers = [
+            DecoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)
+        ]
 
         self.fc = nn.Linear(d_model, target_vocab_size)
         self.dropout = nn.Dropout(dropout)
 
     def generate_mask(self, src: torch.Tensor, tgt: torch.Tensor):
         """
-        This creates a boolean mask where all elements of the src tensor 
-        that are not equal to 0 are marked as True (meaning they are valid tokens), 
-        and all 0s (typically padding tokens) are marked as False. This assumes 
+        This creates a boolean mask where all elements of the src tensor
+        that are not equal to 0 are marked as True (meaning they are valid tokens),
+        and all 0s (typically padding tokens) are marked as False. This assumes
         that the index 0 is used for padding.
         """
         src_mask = (src != 0).unsqueeze(1).unsqueeze(2)
@@ -75,22 +89,29 @@ class Transformer(nn.Module):
         """
         nopeak_mask = (1 - torch.triu(ones, diagonal=1)).bool()
 
+        target_mask = target_mask & nopeak_mask
+        return src_mask, target_mask
+
     def forward(self, src: torch.Tensor, tgt: torch.Tensor):
         """
         Generate masks using the above method
         """
         src_mask, target_mask = self.generate_mask(src, tgt)
 
-        src_embedded = self.dropout(self.positional_encoding(self.encoder_embedding(src)))
-        tgt_embedded = self.dropout(self.positional_encoding(self.decoder_embedding(tgt)))
+        src_embedded = self.dropout(
+            self.positional_encoding(self.encoder_embedding(src))
+        )
+        tgt_embedded = self.dropout(
+            self.positional_encoding(self.decoder_embedding(tgt))
+        )
 
         enc_output = src_embedded
         for enc_layer in self.encoder_layers:
-            enc_output = enc_layer.forward(enc_output, src_mask)
+            enc_output = enc_layer(enc_output, src_mask)
 
         dec_output = tgt_embedded
         for dec_layer in self.decoder_layers:
-            dec_output = dec_layer.forward(dec_layer, enc_output, src_mask, target_mask)
+            dec_output = dec_layer(dec_output, enc_output, src_mask, target_mask)
 
         output = self.fc(dec_output)
         return output
